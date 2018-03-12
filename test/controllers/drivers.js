@@ -37,4 +37,22 @@ describe('Drivers Controller', () => {
         })
     });
   });
+
+  it('DELETE request to /api/driver/id deletes an existing driver', done => {
+    const driver = new Driver({
+      email: 'driver2@muber.com'
+    });
+
+    driver.save().then(() => {
+      request(app)
+        .delete(`/api/drivers/${driver._id}`)
+        .end((err, res) => {
+          Driver.findOne({ email: driver.email })
+            .then((driver) => {
+              assert(driver === null);
+              done();
+            });
+        })
+    });
+  });
 });
