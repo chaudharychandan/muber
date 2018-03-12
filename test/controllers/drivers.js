@@ -6,7 +6,7 @@ const app = require('../../app');
 const Driver = mongoose.model('driver');
 
 describe('Drivers Controller', () => {
-  it('POST request to /api/driver creates a new driver', done => {
+  it('POST request to /api/drivers creates a new driver', done => {
     Driver.count().then(count => {
       request(app)
         .post('/api/drivers')
@@ -20,7 +20,7 @@ describe('Drivers Controller', () => {
     });
   });
 
-  it('PATCH request to /api/driver/id updates an existing driver', done => {
+  it('PATCH request to /api/drivers/id updates an existing driver', done => {
     const driver = new Driver({
       email: 'driver1@muber.com',
       driving: false
@@ -38,7 +38,7 @@ describe('Drivers Controller', () => {
     });
   });
 
-  it('DELETE request to /api/driver/id deletes an existing driver', done => {
+  it('DELETE request to /api/drivers/id deletes an existing driver', done => {
     const driver = new Driver({
       email: 'driver2@muber.com'
     });
@@ -54,5 +54,35 @@ describe('Drivers Controller', () => {
             });
         })
     });
+  });
+
+  it('GET request to /api/drivers finds drivers in a location', done => {
+    const seattleDriver = new Driver({
+      email: 'seattle@muber.com',
+      geometry: {
+        type: 'Point',
+        coordinates: [-122.4759902, 47.6147628]
+      }
+    });
+
+    const miamiDriver = new Driver({
+      email: 'miami@muber.com',
+      geometry: {
+        type: 'Point',
+        coordinates: [-80.253, 25.791]
+      }
+    });
+
+    Promise.all([seattleDriver.save(), miamiDriver.save()])
+      .then(() => {
+        request(app)
+          .get('/api/drivers?lng=-80&lat=25')
+          .end((err, res) => {
+            const drivers = res.body;
+            assert(drivers.length === 1);
+            assert(drivers[0].email === miamiDriver.email);
+            done();
+          });
+      })
   });
 });
